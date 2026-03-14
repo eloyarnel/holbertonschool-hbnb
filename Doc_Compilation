@@ -1,1 +1,208 @@
-Test :)
+Test!!!!
+HBnB Project – Technical Documentation
+1. Introduction
+Purpose and Scope
+
+This document provides the technical documentation for the HBnB Evolution application. It describes the architecture, system design, core entities, and interactions between components. The goal is to provide a clear reference for developers, maintainers, and stakeholders to understand how the system is structured and how its components interact.
+
+Project Overview
+
+HBnB Evolution is a simplified property rental platform inspired by Airbnb. The application allows users to create accounts, list properties, leave reviews, and manage amenities associated with places.
+
+The system follows a modular layered architecture and applies object-oriented programming principles to ensure scalability, maintainability, and separation of concerns.
+
+Document Structure
+
+This document contains the following sections:
+
+High-Level Architecture
+Business Logic Layer
+API Interaction Flow
+Design Notes
+
+2. High-Level Architecture
+Overview
+
+The HBnB system follows a layered architecture to separate responsibilities and improve maintainability. Each layer focuses on a specific role within the application.
+
+The architecture consists of three primary layers:
+
+Presentation Layer
+Business Logic Layer
+Persistence Layer
+
+Presentation Layer
+
+The Presentation Layer handles client interactions through API endpoints. It receives requests from clients and forwards them to the appropriate services.
+
+Responsibilities include:
+
+Handling HTTP requests
+Validating input data
+Returning API responses
+
+Business Logic Layer
+
+The Business Logic Layer contains the core models and services responsible for implementing the application's rules and behaviors.
+
+Responsibilities include:
+
+Managing domain entities
+Processing business operations
+Coordinating interactions between objects
+
+Persistence Layer
+
+The Persistence Layer is responsible for database access and data storage.
+
+Responsibilities include:
+
+Saving and retrieving data
+Managing database queries
+Providing repository interfaces for the business layer
+
+Architecture Diagram
+
+Below is the high-level architecture diagram of the system.
+
+Explanation
+
+Interface Presentation Layer
+Handles incoming requests through the API and forwards them to the appropriate model or service.
+
+Facade Pattern
+The presentation layer acts as a facade that simplifies access to the business logic models.
+
+Persistence Layer
+Responsible for database access and data retrieval.
+
+3. Business Logic Layer
+Class Diagram
+
+The following diagram shows the core entities of the HBnB system and their relationships.
+
+Main Entities
+
+User
+Represents an individual interacting with the platform. Users can create places and write reviews.
+
+Attributes include:
+
+first_name
+last_name
+email
+password
+places
+reviews
+
+Place
+Represents a property listed by a user.
+
+Attributes include:
+
+title
+description
+price
+owner
+address
+max_guests
+reviews
+
+Review
+Represents feedback written by users about a place.
+
+Attributes include:
+
+reviewer
+place
+rating
+comment
+author
+
+Amenity
+Represents features that can be associated with places.
+
+Attributes include:
+
+name
+description
+created_at
+updated_at
+
+Entity Relationships
+
+User → Place
+A user can own multiple places.
+
+User → Review
+A user can write multiple reviews.
+
+Place → Review
+A place can have multiple reviews.
+
+Place → Amenity
+A place can have multiple amenities.
+
+4. API Interaction Flow
+Sequence Diagram
+
+The following diagram illustrates how the system processes a user registration request.
+
+Flow Explanation
+
+Client
+Sends a request to create a new user account.
+
+API Controller
+Receives the request and validates the input data.
+
+User Service
+Processes the request and creates the user object.
+
+User Model
+Instantiates the user entity.
+
+User Repository
+Handles saving the user data to the database.
+
+Database
+Stores the new user record and returns a success confirmation.
+
+5. Design Notes
+Architectural Decisions
+
+Layered Architecture
+Separates the system into presentation, logic, and persistence layers to improve modularity.
+
+Object-Oriented Design
+Encapsulation and abstraction are used to organize the application into reusable components.
+
+Facade Pattern
+The API layer simplifies interactions with the underlying models and services.
+
+Repository Pattern
+Repositories handle database interactions, allowing business logic to remain independent from database details.
+
+6. System Integration
+
+The components interact in the following way:
+
+The client sends a request to the API.
+
+The API validates the request and forwards it to the appropriate service.
+
+The service processes the business logic.
+
+The repository stores or retrieves data from the database.
+
+The API returns the response to the client.
+
+Conclusion
+
+This technical documentation describes the architecture and design of the HBnB Evolution application. The diagrams and explanations provided here define the relationships between system components and clarify how requests flow through the system. This documentation serves as a guide for developers implementing and maintaining the application.
+
+If you want, I can also help you make this look exactly like what Holberton usually expects, including:
+
+• the exact folder structure for submitting it
+• the best diagram titles professors look for
+• and a slightly cleaner version that scores higher in review.
