@@ -1,0 +1,422 @@
+# 🏢 HBnB Project – Technical Documentation
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-1.0.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Architecture-3--Layer%20Architecture-green?style=for-the-badge" alt="Architecture">
+  <img src="https://img.shields.io/badge/Design%20Patterns-Facade%20%26%20Repository-orange?style=for-the-badge" alt="Patterns">
+</p>
+
+---
+
+## 1. Introduction
+
+### 🎯 Purpose and Scope
+This document provides the technical documentation for the **HBnB Evolution** application. It describes the overarching system architecture, detailed domain design, core entities, and runtime API interaction flows. This guide is curated to provide developers, architects, and maintainers with a clear and absolute understanding of how the application components are isolated and how they communicate.
+
+### 🌐 Project Overview
+HBnB Evolution is a modular, lightweight property rental platform inspired by the core functionalities of Airbnb. The system empowers users to:
+* **Identity Management:** Register accounts and maintain secure user profiles.
+* **Property Listings:** Create, update, and showcase rental properties (*places*).
+* **Feedback Loop:** Submit numerical ratings and text-based reviews for properties.
+* **Facility Cataloging:** Associate customized amenities (e.g., WiFi, Pool) with specific listings.
+
+The core codebase strictly applies **Object-Oriented Programming (OOP)** and enterprise software design patterns to secure modularity, continuous scalability, and seamless maintainability.
+
+### 📂 Document Structure
+This documentation is engineered into the following functional areas:
+1.  **High-Level Architecture:** Structural organization and separation of concerns.
+2.  **Business Logic Layer:** Deep dive into domain models, data types, and multiplicities.
+3.  **API Interaction Flow:** Step-by-step sequence of runtime transactions.
+4.  **Design Notes:** Core architectural principles justifying engineering decisions.
+
+---
+
+## 2. High-Level Architecture
+
+### 🏗️ Overview
+HBnB follows a **Layered Architecture** pattern, enforcing a strict separation of concerns. By dividing responsibilities into decoupled tiers, the system restricts component leakage, facilitates independent unit testing, and allows developers to swap infrastructure layers (like the database engine) with zero friction.
+
+```mermaid
+flowchart TB
+    %% Presentation Layer
+    subgraph PresentationLayer [Capa de Presentación / API]
+        direction LR
+        API[Servicios & Endpoints API]
+        U_API[User API]
+        P_API[Place API]
+        R_API[Review API]
+        A_API[Amenity API]
+        API --- U_API & P_API & R_API & A_API
+    end
+
+    %% Business Logic Layer
+    subgraph BusinessLogicLayer [Capa de Lógica de Negocio]
+        Facade[HBnB Facade Interface]
+
+        subgraph Models [Modelos del Núcleo]
+            M_User[User Model]
+            M_Place[Place Model]
+            M_Review[Review Model]
+            M_Amenity[Amenity Model]
+        end
+    end
+
+    %% Persistence Layer
+    subgraph PersistenceLayer [Capa de Persistencia]
+        direction LR
+        subgraph Repositories [Repositorios / DAOs]
+            R_User[User Repository]
+            R_Place[Place Repository]
+            R_Review[Review Repository]
+            R_Amenity[Amenity Repository]
+        end
+        DB[(Base de Datos)]
+        Repositories --> DB
+    end
+
+    %% Layer Interactions via Facade
+    PresentationLayer ==>|1. Requests| Facade
+    Facade ==>|2. Domain Logic| Models
+    Facade ==>|3. Persistence| Repositories
+
+    %% Visual Styling
+    style PresentationLayer fill:#f5f5ff,stroke:#4f46e5,stroke-width:2px
+    style BusinessLogicLayer fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style PersistenceLayer fill:#fff7ed,stroke:#ea580c,stroke-width:2px
+    style Facade fill:#fef08a,stroke:#ca8a04,stroke-width:2px,stroke-dasharray: 5 5
+
+
+## 🎛️ Layer Breakdown
+# 1. Presentation Layer
+The system's frontline interface. It handles all network-level communications between external clients and the internal application ecosystem.
+
+Responsibilities:
+
+Exposing RESTful API endpoints.
+
+Sanitizing inputs and performing syntactical data validations.
+
+Mapping exceptions to semantic HTTP Status Codes (200 OK, 400 Bad Request, 404 Not Found).
+
+# 2. Business Logic Layer
+The operational heart of HBnB. This tier evaluates and executes the core business rules independent of how the data was received or how it will be stored.
+
+Responsibilities:
+
+Managing state mutations of domain models.
+
+Enforcing data constraints (e.g., rating ranges, unique constraints).
+
+Orchestrating domain entity behaviors through an atomic Facade pattern interface.
+
+# 3. Persistence Layer
+The data infrastructure tier. It handles the lifecycle of system records, managing memory or disk hard writes.
+
+Responsibilities:
+
+Abstracting raw CRUD operations through the Repository Pattern.
+
+Isolating data persistence engines (SQL / NoSQL / In-Memory) from the business layer.
+
+Ensuring transaction atomicity and safe record retrieval.
+
+# 3. Business Logic Layer
+## 📋 Review of Business Logic Requirements
+To build a scalable and orderly system in HBnB, the business logic layer adheres to the following strict operational rules:
+
+Unified Identity & Audit: Absolutely all entities in the system must have an immutable unique global identifier (UUID4), accompanied by automatic system timestamps that track the exact date and time of creation and latest modification.
+
+Attribute Encapsulation: Sensitive or internal data must not be manipulated directly from the outside; instead, specific methods are exposed to safely mutate object state.
+
+Domain Validation: Models are not empty data containers (Anemic Models). Each entity holds the responsibility to validate its own data before allowing it to save or update (e.g., ensuring a price is positive or a rating falls within the required range).
+
+## 📐 Detailed Class Diagram
+The Business Logic Layer relies on explicit object blueprints. To respect the DRY (Don't Repeat Yourself) principle, shared structural attributes are abstracted into a common BaseModel.
+
+Code snippet
+classDiagram
+    class BaseModel {
+        +string id
+        +datetime created_at
+        +datetime updated_at
+        +save() void
+        +to_dict() dict
+    }
+
+    class User {
+        +string first_name
+        +string last_name
+        +string email
+        +string password
+        +bool is_admin
+        +register() bool
+    }
+
+    class Place {
+        +string title
+        +string description
+        +float price
+        +string address
+        +int max_guests
+        +string owner_id
+    }
+
+    class Review {
+        +string comment
+        +int rating
+        +string place_id
+        +string user_id
+    }
+
+    class Amenity {
+        +string name
+        +string description
+    }
+
+    %% Inheritance / Generalization
+    BaseModel <|-- User : Inherits UUID and timestamps
+    BaseModel <|-- Place : Inherits UUID and timestamps
+    BaseModel <|-- Review : Inherits UUID and timestamps
+    BaseModel <|-- Amenity : Inherits UUID and timestamps
+
+    %% Entity Multiplicities
+    User "1" --> "0..*" Place : owner / manages
+    User "1" --> "0..*" Review : reviewer / author
+    Place "1" *-- "0..*" Review : contains (Composition)
+    Place "0..*" --> "0..*" Amenity : possesses / offers
+
+
+## 💎 Key Attributes and Methods Specifications
+BaseModel (Parent Class)
+Provides identity and audit tracking across the entire architecture. All entities inherit from this base class to ensure consistency and simplify data management.
+
+id (string): Unique identifier generated via secure UUID4.
+
+created_at / updated_at (datetime): Automatic system timestamps capturing object history.
+
+save(): Updates the updated_at field and flags the instance as ready to sync.
+
+to_dict(): Serializes model attributes into a standard Python dictionary layout.
+
+User
+Defines any physical individual registered within the system ecosystem who can host properties or post feedback.
+
+Attributes: first_name, last_name, email (Unique key), password (Hashed), is_admin (Role flag).
+
+Methods: register() to enforce initialization constraints.
+
+Place
+The rental property unit offered by hosts on the platform.
+
+Attributes: title, description, price (Enforced positive float), address, max_guests, owner_id (Foreign link to User).
+
+Review
+Feedback and textual commentary submitted by a guest evaluating a specific rental property.
+
+Attributes: comment, rating (Integer bounded strictly between 1–5), place_id, user_id.
+
+Amenity
+Abstract features, facilities, or services accessible within a property (such as WiFi or parking).
+
+Attributes: name (Unique string index), description.
+
+## 🔗 Logic of Relationships (Significance)
+Inheritance (|--): By inheriting from BaseModel, we elegantly guarantee that all business classes follow the exact same identification and audit standard without duplicating code.
+
+User ──> Place (1 to 0..*): A User can own and manage multiple listings, but every Place is structurally tied to one unique Owner for accounting and support safety.
+
+User ──> Review (1 to 0..*): A User can author multiple reviews across the platform; each individual review tracks exactly one single author to prevent anonymous rating manipulation.
+
+Place ── Review (1 to 0..*):* Enforces a Composition relationship. Reviews cannot exist as orphan instances. If a property listing (Place) is removed from the platform, its complete historical review log is destroyed in cascade.
+
+Place <──> Amenity (0..* to 0..*): A property can hold many amenities, and a single amenity can belong to many listings, creating a symmetric Many-to-Many map for robust filter indexing.
+
+# 4. API Interaction Flow
+The following sequence diagrams trace exactly how information navigates across presentation controllers, the facade boundary, business entities, and database repositories during runtime execution.
+
+## 👤 1. User Registration Flow
+Handles the workflow required to establish and secure a new user account on HBnB.
+
+Code snippet
+sequenceDiagram
+    autonumber
+    actor Client as Client / User
+    participant API as Presentation Layer<br>(User API)
+    participant Facade as Facade<br>(HBnBFacade)
+    participant Model as Business Layer<br>(User Model)
+    participant DB as Persistence Layer<br>(UserRepository)
+
+    Client->>API: POST /api/v1/users (user_data)
+    activate API
+    API->>API: Validate input format<br>(Valid email, secure password)
+
+    API->>Facade: register_user(user_data)
+    activate Facade
+
+    Facade->>DB: get_by_email(email)
+    activate DB
+    DB-->>Facade: Returns User or Null
+    deactivate DB
+
+    alt Email already exists in the system
+        Facade-->>API: Throw Exception (Email already registered)
+        API-->>Client: HTTP 400 Bad Request (Error: Email in use)
+    else Email available and valid
+        Facade->>Model: Instantiate User(data)
+        activate Model
+        Model->>Model: Hash Password<br>Generate UUID4 & timestamps
+        Model-->>Facade: User Object Created
+        deactivate Model
+
+        Facade->>DB: save(user_object)
+        activate DB
+        DB-->>Facade: Confirm save success
+        deactivate DB
+
+        Facade-->>API: Return created user data
+        deactivate Facade
+        API-->>Client: HTTP 201 Created (ID, Name, Email, etc.)
+    end
+    deactivate API
+
+
+## 🏡 2. Place Creation Flow
+Executes when an authenticated user attempts to publish a new property listing.
+
+Code snippet
+sequenceDiagram
+    autonumber
+    actor Host as Host (User)
+    participant API as Presentation Layer<br>(Place API)
+    participant Facade as Facade<br>(HBnBFacade)
+    participant DB_User as Persistence Layer<br>(UserRepository)
+    participant Model as Business Layer<br>(Place Model)
+    participant DB_Place as Persistence Layer<br>(PlaceRepository)
+
+    Host->>API: POST /api/v1/places (place_data, owner_id)
+    activate API
+
+    API->>Facade: create_place(place_data, owner_id)
+    activate Facade
+
+    Facade->>DB_User: get_by_id(owner_id)
+    activate DB_User
+    DB_User-->>Facade: Returns User object (or Null)
+    deactivate DB_User
+
+    alt Owner ID does not exist
+        Facade-->>API: Throw Exception (User not found)
+        API-->>Host: HTTP 404 Not Found (Invalid property owner)
+    else Valid User
+        Facade->>Model: Instantiate Place(data, owner_id)
+        activate Model
+        Model->>Model: Validate coordinates & price<br>Generate UUID4
+        Model-->>Facade: Place Object Created
+        deactivate Model
+
+        Facade->>DB_Place: save(place_object)
+        activate DB_Place
+        DB_Place-->>Facade: Confirm save success
+        deactivate DB_Place
+
+        Facade-->>API: Return created place data
+        deactivate Facade
+        API-->>Host: HTTP 201 Created (Place Details)
+    end
+    deactivate API
+
+
+## ⭐ 3. Review Submission Flow
+Triggers when an individual posts experience ratings and comments for a validated listing.
+
+Code snippet
+sequenceDiagram
+    autonumber
+    actor Guest as Guest (User)
+    participant API as Presentation Layer<br>(Review API)
+    participant Facade as Facade<br>(HBnBFacade)
+    participant DB as Persistence Layer<br>(User/Place Repos)
+    participant Model as Business Layer<br>(Review Model)
+    participant DB_Rev as Persistence Layer<br>(ReviewRepository)
+
+    Guest->>API: POST /api/v1/places/{place_id}/reviews (comment, rating, user_id)
+    activate API
+
+    API->>Facade: add_review(place_id, user_id, comment, rating)
+    activate Facade
+
+    Facade->>DB: Verify User and Place existence
+    activate DB
+    DB-->>Facade: Both exist (Validation Successful)
+    deactivate DB
+
+    Facade->>Model: Instantiate Review(comment, rating, place_id, user_id)
+    activate Model
+    Model->>Model: Validate score range (1 to 5)
+    Model-->>Facade: Review Object Ready
+    deactivate Model
+
+    Facade->>DB_Rev: save(review_object)
+    activate DB_Rev
+    DB_Rev-->>Facade: Confirm save success
+    deactivate DB_Rev
+
+    Facade-->>API: Return review confirmation
+    deactivate Facade
+    API-->>Guest: HTTP 201 Created (Review saved successfully)
+    deactivate API
+
+
+## 🔍 4. Fetching a List of Places Flow
+Handles the non-transactional query thread when a user evaluates listings based on filtering criteria.
+
+Code snippet
+sequenceDiagram
+    autonumber
+    actor Client as Client / User
+    participant API as Presentation Layer<br>(Place API)
+    participant Facade as Facade<br>(HBnBFacade)
+    participant DB as Persistence Layer<br>(PlaceRepository)
+
+    Client->>API: GET /api/v1/places?city=Paris (Optional filters)
+    activate API
+
+    API->>Facade: get_all_places(filters)
+    activate Facade
+
+    Facade->>DB: get_all() or get_filtered(filters)
+    activate DB
+    DB-->>Facade: Collection of Place objects (Raw Data)
+    deactivate DB
+
+    alt Data collection is empty
+        Facade-->>API: Return empty list []
+        API-->>Client: HTTP 200 OK []
+    else Contains property records
+        Facade->>Facade: Format/Serialize raw objects to clean dictionaries
+        Facade-->>API: Return formatted place list
+        deactivate Facade
+        API-->>Client: HTTP 200 OK [ {place1}, {place2}, ... ]
+    end
+    deactivate API
+
+
+# 5. Design Notes
+
+## ⚖️ Architectural Trade-offs & Decisions:
+The HBnB system design prioritizes maintenance simplicity and testing modularity over micro-optimization. The patterns applied ensure that business rules remain completely unaffected by infrastructural mutations.
+
+## 🧩 1. Layered Architecture Clean Separation
+By forcing strict single-direction dependencies (Presentation → Business → Persistence), we eliminate hidden side effects. Changes within database schemas cannot force compilation errors inside the presentation routing modules.
+
+## 📐 Domain-Driven Object Design
+Relying on rich domain models rather than an anemic model structure allows entities to protect their own data integrity. A Review object will refuse initialization if its rating constraint fails, preventing invalid data from spreading across layers.
+
+## 🚪 Facade Design Pattern Implementation
+The HBnBFacade class acts as the single gatekeeper for internal operations. This reduces the surface area of the Business Logic layer exposed to the Presentation layer. The API controllers never require knowledge about multiple interlocking services; they request a high-level command from the Facade, which orchestrates the sub-systems internally.
+
+## 🗃️ Repository Abstraction Pattern
+Repositories isolate database engines completely. The Business layer interacts with an interface declaration (save, get_by_id). This strategy guarantees that the system can operate on plain memory arrays (In-Memory Storage) during automated testing runs, and switch to a fully persistent relational engine (SQLAlchemy/PostgreSQL) in production via environment configuration switches.
+
+## 🏁 Conclusion
+This technical blueprint details a highly maintainable foundation for the HBnB Evolution application. The architectural decisions detailed here ensure that as feature sets expand—such as processing payment pathways or booking calendar allocations—the application can scale without requiring fundamental rewrites of its core data layers.
